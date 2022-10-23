@@ -2,12 +2,60 @@ const canvas = document.querySelector("canvas");
 
 const c = canvas.getContext("2d");
 
+console.log(collisions);
+
 canvas.width = 1024;
 canvas.height = 576;
 
 c.fillStyle = "black";
 c.fillRect(0, 0, canvas.width, canvas.height);
 
+const collisionMap = [];
+for (let i = 0; i < collisions.length; i += 16) {
+  collisionMap.push(collisions.slice(i, 16 + i));
+}
+
+class Boundary {
+  static width = 32;
+  static height = 32;
+  constructor({ position }) {
+    this.position = position;
+    this.width = 32;
+    this.height = 32;
+  }
+
+  draw() {
+    c.fillStyle = "rgba(255, 0, 0, 0)";
+    c.fillRect(this.position.x, this.position.y, this.width, this.height);
+  }
+}
+
+const offset = {
+  x: 256,
+  y: 64,
+  char_x: -32,
+  char_y: -64,
+};
+
+const boundaries = [];
+
+collisionMap.forEach((row, i) => {
+  row.forEach((symbol, j) => {
+    if (symbol === 413761) {
+      boundaries.push(
+        new Boundary({
+          position: {
+            x: j * Boundary.height + offset.x,
+            y: i * Boundary.width + offset.y,
+          },
+        })
+      );
+    }
+  });
+});
+
+let temp = boundaries.filter((boundary) => boundary.position.y);
+console.log(temp);
 const image = new Image();
 
 const playerImage = new Image();
@@ -40,38 +88,134 @@ class Player {
     ]);
   }
 
+  //  box is 32x32, [0,0] starts at stop left of box
+  //  player model bottom left foot is [-32,-32], top half of head is 12px above the 32x32 box;
+
   move(key) {
-    console.log("test");
+    // console.log("test");
     let [x, y] = this.drawProperties.position;
     let arr = [x, y];
 
+    // console.log(y);
     if (keys[`${key}`].pressed) {
-      console.log("aaaa");
-
       switch (key) {
         case "w":
-          y -= 4;
+          if (
+            boundaries.some(function (boundary, index) {
+              console.log(
+                `boundary y: `,
+                boundary.position.y,
+                `boundary x: `,
+                boundary.position.x,
+                `y:`,
+                y,
+                "x:",
+                x
+              );
+              if (y >= boundary.position.y + 64) {
+                return (
+                  y - 1 < boundary.position.y + 64 &&
+                  x >= boundary.position.x - 12 &&
+                  x < boundary.position.x + 48
+                );
+              } else console.log("no");
+            })
+          ) {
+            break;
+          }
+          y -= 1;
           arr = [x, y];
           this.drawProperties.position = arr;
           break;
         case "a":
-          x -= 4;
+          if (
+            boundaries.some(function (boundary, index) {
+              console.log(
+                `boundary y: `,
+                boundary.position.y,
+                `boundary x: `,
+                boundary.position.x,
+                `y: `,
+                y,
+                "x",
+                x
+              );
+              if (x >= boundary.position.x) {
+                return (
+                  x - 1 < boundary.position.x + 48 &&
+                  y > boundary.position.y &&
+                  y < boundary.position.y + 64
+                );
+              } else console.log("no");
+            })
+          ) {
+            break;
+          }
+          x -= 1;
           arr = [x, y];
           this.drawProperties.position = arr;
           break;
         case "s":
-          y += 4;
+          console.log("x:", x);
+          console.log("y:", y);
+          if (
+            boundaries.some(function (boundary, index) {
+              console.log(
+                `boundary y: `,
+                boundary.position.y,
+                `boundary x: `,
+                boundary.position.x,
+                `y: `,
+                y,
+                "x",
+                x
+              );
+              if (y <= boundary.position.y) {
+                return (
+                  y + 1 > boundary.position.y &&
+                  x >= boundary.position.x - 12 &&
+                  x < boundary.position.x + 48
+                );
+              } else console.log("no");
+            })
+          ) {
+            break;
+          }
+          y += 1;
           arr = [x, y];
           this.drawProperties.position = arr;
           break;
         case "d":
-          x += 4;
+          if (
+            boundaries.some(function (boundary, index) {
+              console.log(
+                `boundary y: `,
+                boundary.position.y,
+                `boundary x: `,
+                boundary.position.x,
+                `y: `,
+                y,
+                "x",
+                x
+              );
+              if (x <= boundary.position.x) {
+                return (
+                  x + 1 > boundary.position.x - 16 &&
+                  y > boundary.position.y &&
+                  y < boundary.position.y + 64
+                );
+              } else console.log("no");
+            })
+          ) {
+            break;
+          }
+          x += 1;
           arr = [x, y];
           this.drawProperties.position = arr;
           break;
       }
     }
-    console.log(this.drawProperties.position);
+    // console.log(this.drawProperties.position);
   }
 
   startingPoint(image, startFrame, startPosition, scale) {
@@ -107,8 +251,8 @@ class Player {
       cropStartY,
       cropLenX,
       cropLenY,
-      curPosX,
-      curPosY,
+      curPosX + offset.char_x,
+      curPosY + offset.char_y,
       scaleX,
       scaleY
     );
@@ -116,7 +260,7 @@ class Player {
 }
 
 let playerStartFrame = [0, 0, 64, 96];
-let playerStartPosition = [676, 416];
+let playerStartPosition = [600, 400];
 let player = new Player();
 player.startingPoint(
   playerImage,
@@ -144,13 +288,14 @@ let lastKey = "";
 function animate() {
   window.requestAnimationFrame(animate);
   c.drawImage(image, 256, 64);
+  boundaries.forEach((boundary) => {
+    boundary.draw();
+  });
   player.draw(player.drawParameters());
 
-  console.log("test");
-  let [x, y] = player.drawProperties.position;
-  let arr = [x, y];
-
-  if (/^[wasd]$/i.test(lastKey)) player.move(lastKey);
+  if (lastKey != "" && keys[lastKey].pressed) {
+    player.move(lastKey);
+  }
 }
 animate();
 
