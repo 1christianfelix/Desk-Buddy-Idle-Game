@@ -33,15 +33,63 @@ class Player {
 
     this.frameCount = 0;
     this.moveState = false;
+    this.gotoState = false;
   }
   //  box is 32x32, [0,0] starts at stop left of box
   //  player model bottom left foot is [-32,-32], top half of head is 12px above the 32x32 box;
+
+  // TODO:: REWORK SO THAT WE CONVERT DES[X,Y] POSITIONS TO BE [0,0] OF BLOCKS
+  //SO THAT ALL MOVEMENT IS STRAIGHT
+  goto(des_x, des_y, playerImage) {
+    let [x, y] = this.drawProperties.position;
+    // console.log(des_x, x);
+    // console.log(this.frameCount);
+    if (this.moveState == false) {
+      this.frameCount = 0;
+    }
+    this.moveState = true;
+    this.frameMove();
+    this.frameCount++;
+    console.log(des_x > x);
+
+    if (des_x > x) {
+      x++;
+      playerImage.src = "./char/char_right.png";
+    } else {
+      x--;
+      playerImage.src = "./char/char_left.png";
+    }
+
+    if (des_x == x) {
+      if (des_y > y) {
+        console.log(des_x, x);
+        console.log("d");
+        console.log(playerImage.src);
+        y++;
+        playerImage.src = "./char/char_down.png";
+      } else {
+        console.log("u");
+        y--;
+        playerImage.src = "./char/char_up.png";
+      }
+    }
+    this.drawProperties.position = [x, y];
+    this.drawProperties.image = playerImage;
+    if (des_x == x && des_y == y) {
+      this.frameCount = 0;
+      this.gotoState = false;
+      this.moveState = false;
+    }
+  }
+
   move(key) {
     this.moveState = true;
     let [x, y] = this.drawProperties.position;
     let arr = [x, y];
 
     this.frameMove();
+
+    // WASD MOVEMENT
     if (keys[`${key}`].pressed) {
       this.frameCount++;
       switch (key) {
@@ -49,6 +97,8 @@ class Player {
           if (
             boundaries.some(function (boundary, index) {
               if (y >= boundary.position.y + 64) {
+                console.log(x, y);
+                console.log("ttt", boundary.position);
                 return (
                   y - 1 < boundary.position.y + 64 &&
                   x >= boundary.position.x - 12 &&
@@ -67,6 +117,8 @@ class Player {
           if (
             boundaries.some(function (boundary, index) {
               if (x >= boundary.position.x) {
+                console.log(x, y);
+                console.log("ttt", boundary.position);
                 return (
                   x - 1 < boundary.position.x + 48 &&
                   y > boundary.position.y &&
@@ -85,6 +137,8 @@ class Player {
           if (
             boundaries.some(function (boundary, index) {
               if (y <= boundary.position.y) {
+                console.log(x, y);
+                console.log("ttt", boundary.position);
                 return (
                   y + 1 > boundary.position.y &&
                   x >= boundary.position.x - 12 &&
@@ -103,6 +157,8 @@ class Player {
           if (
             boundaries.some(function (boundary, index) {
               if (x <= boundary.position.x) {
+                console.log(x, y);
+                console.log("ttt", boundary.position);
                 return (
                   x + 1 > boundary.position.x - 16 &&
                   y > boundary.position.y &&

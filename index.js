@@ -54,7 +54,7 @@ image.src = "./img/Room Map.png";
 /////////////////////////
 
 let playerStartFrame = [0, 0, 64, 96];
-let playerStartPosition = [600, 400];
+let playerStartPosition = [384, 352];
 let player = new Player();
 player.startingPoint(
   playerImage,
@@ -94,13 +94,31 @@ function animate() {
     player.move(lastKey);
   }
   if (player.moveState == false) player.frameIdle();
-  console.log(player.frameCount);
+  // console.log(player.frameCount);
+  if (player.gotoState == true)
+    player.goto(goto_pos[0], goto_pos[1], playerImage);
 }
 animate();
 
 ////////////////////////////
 /*  MOVEMENT DEVELOPMENT  */
 ////////////////////////////
+
+let goto_pos = [];
+function getCursorPosition(canvas, event) {
+  const rect = canvas.getBoundingClientRect();
+  console.log(rect);
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  console.log("x: " + x + " y: " + y);
+  goto_pos = [x, y];
+}
+
+canvas.addEventListener("click", function (e) {
+  player.gotoState = true;
+  getCursorPosition(canvas, e);
+});
+
 window.addEventListener("keydown", (keyPressed) => {
   if (player.moveState == false) {
     console.log("t");
